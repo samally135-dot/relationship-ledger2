@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <title>社會投資理論 - 關係帳本佈告欄</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    input, select, textarea { font-size: 16px !important; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-16" x-data="appData()">
+
+  <!-- 頂部 Header -->
+  <header class="bg-slate-800/90 backdrop-blur border-b border-slate-700 sticky top-0 z-50 px-4 py-3 shadow-md">
+    <div class="max-w-md mx-auto flex justify-between items-center">
+      <h1 class="font-bold text-lg text-emerald-400 flex items-center gap-2">
+        <span>📖</span> 關係投資帳本
+      </h1>
+      <span class="text-xs px-2.5 py-1 bg-slate-700 rounded-full text-slate-300" x-text="'共 ' + posts.length + ' 筆記錄'"></span>
+    </div>
+  </header>
+
+  <main class="max-w-md mx-auto p-4 space-y-6">
+
+    <!-- 表單卡片 -->
+    <section class="bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-xl space-y-4">
+      <h2 class="text-md font-semibold text-slate-200 border-b border-slate-700 pb-2 flex items-center justify-between">
+        <span>📝 記下一筆關係投資</span>
+        <span class="text-xs font-normal text-slate-400">匿名 / 實名自由選</span>
+      </h2>
+
+      <!-- 1. 匿名與暱稱 -->
+      <div class="space-y-2">
+        <label class="text-xs font-medium text-slate-300">發布身份</label>
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+            <input type="checkbox" x-model="form.isAnonymous" class="rounded bg-slate-700 border-slate-600 text-emerald-500 focus:ring-0">
+            <span>匿名發布</span>
+          </label>
+          <input x-show="!form.isAnonymous" x-transition type="text" x-model="form.nickname" placeholder="請輸入暱稱" class="flex-1 bg-slate-700/60 border border-slate-600 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-emerald-400">
+        </div>
+      </div>
+
+      <!-- 2. 關係類型選擇 -->
+      <div class="space-y-2">
+        <label class="text-xs font-medium text-slate-300">關係類型</label>
+        <div class="grid grid-cols-3 gap-2">
+          <template x-for="type in ['親情', '友情', '愛情']" :key="type">
+            <button type="button" @click="form.relationType = type"
+              :class="form.relationType === type ? 'bg-emerald-600 text-white border-emerald-500 shadow' : 'bg-slate-700/50 text-slate-400 border-slate-600'"
+              class="py-2 border rounded-xl text-sm font-medium transition-all active:scale-95" x-text="type"></button>
+          </template>
+        </div>
+      </div>
+
+      <!-- 3. 成本與報酬 -->
+      <div class="grid grid-cols-2 gap-3 pt-1">
+        <div class="bg-slate-900/40 p-3 rounded-xl border border-red-500/20 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-semibold text-red-400">付出成本 (Cost)</span>
+            <span class="text-xs font-bold text-red-400" x-text="form.costScore + ' 分'"></span>
+          </div>
+          <input type="range" min="1" max="10" x-model.number="form.costScore" class="w-full accent-red-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer">
+          <input type="text" x-model="form.costDesc" placeholder="如：陪伴時間、金錢..." class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-red-400">
+        </div>
+
+        <div class="bg-slate-900/40 p-3 rounded-xl border border-emerald-500/20 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-semibold text-emerald-400">獲得報酬 (Reward)</span>
+            <span class="text-xs font-bold text-emerald-400" x-text="form.rewardScore + ' 分'"></span>
+          </div>
+          <input type="range" min="1" max="10" x-model.number="form.rewardScore" class="w-full accent-emerald-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer">
+          <input type="text" x-model="form.rewardDesc" placeholder="如：情感支持、安全感..." class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-emerald-400">
+        </div>
+      </div>
+
+      <!-- 4. 幸福感評估 -->
+      <div class="bg-slate-900/40 p-3 rounded-xl border border-amber-500/20 space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-semibold text-amber-400 flex items-center gap-1">
+            <span>✨ 幸福感指數</span>
+            <span x-text="getHappinessEmoji(form.happiness)"></span>
+          </span>
+          <span class="text-xs font-bold text-amber-400" x-text="form.happiness + ' / 10'"></span>
+        </div>
+        <input type="range" min="1" max="10" x-model.number="form.happiness" class="w-full accent-amber-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer">
+      </div>
+
+      <!-- 5. 心得感悟 -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-medium text-slate-300">心得與反思 (選填)</label>
+        <textarea x-model="form.note" rows="2" placeholder="寫下這段關係帶給你的體悟..." class="w-full bg-slate-700/60 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-400 resize-none"></textarea>
+      </div>
+
+      <!-- 送出按鈕 -->
+      <button type="button" @click="addPost()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl text-sm transition-all shadow-lg active:scale-95 flex items-center justify-center gap-1">
+        <span>🚀 發布到關係佈告欄</span>
+      </button>
+    </section>
+
+    <!-- 佈告欄列表 -->
+    <section class="space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-sm font-semibold text-slate-300">📌 大家的心得與帳本</h3>
+        
+        <div class="flex gap-1 bg-slate-800 p-1 rounded-lg border border-slate-700">
+          <template x-for="filter in ['全部', '親情', '友情', '愛情']" :key="filter">
+            <button @click="currentFilter = filter"
+              :class="currentFilter === filter ? 'bg-slate-700 text-emerald-400' : 'text-slate-400'"
+              class="px-2 py-0.5 rounded text-xs font-medium transition-all" x-text="filter"></button>
+          </template>
+        </div>
+      </div>
+
+      <!-- 貼文列表 -->
+      <div class="space-y-3">
+        <template x-for="post in filteredPosts" :key="post.id">
+          <div class="bg-slate-800/80 rounded-xl p-4 border border-slate-700 space-y-3 shadow-md">
+            <div class="flex justify-between items-start">
+              <div class="flex items-center gap-2">
+                <span class="text-lg" x-text="getTypeEmoji(post.relationType)"></span>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="font-medium text-sm text-slate-200" x-text="post.nickname"></span>
+                    <span class="text-[10px] px-2 py-0.5 rounded bg-slate-700 text-slate-300" x-text="post.relationType"></span>
+                  </div>
+                  <span class="text-[10px] text-slate-400" x-text="post.time"></span>
+                </div>
+              </div>
+              
+              <div class="text-right">
+                <span class="text-xs font-bold px-2 py-1 rounded-full" 
+                      :class="post.netROI >= 0 ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800' : 'bg-red-950/80 text-red-400 border border-red-800'"
+                      x-text="'淨值 ' + (post.netROI > 0 ? '+' : '') + post.netROI"></span>
+              </div>
+            </div>
+
+            <!-- 診斷標籤與幸福感 -->
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <span class="text-xs px-2.5 py-0.5 rounded-md bg-amber-950/60 text-amber-300 border border-amber-800/50 flex items-center gap-1 font-medium">
+                <span x-text="getHappinessEmoji(post.happiness)"></span>
+                <span x-text="'幸福感 ' + post.happiness + '/10'"></span>
+              </span>
+              <span class="text-xs px-2.5 py-0.5 rounded-md bg-slate-700/80 text-slate-300 font-medium" x-text="post.insightTag"></span>
+            </div>
+
+            <!-- 成本 / 報酬 明細 -->
+            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/50">
+              <div class="space-y-0.5 border-r border-slate-700/50 pr-2">
+                <div class="text-red-400 font-semibold flex justify-between">
+                  <span>成本</span>
+                  <span x-text="post.costScore + '分'"></span>
+                </div>
+                <div class="text-slate-400 truncate" x-text="post.costDesc || '無詳細描述'"></div>
+              </div>
+              <div class="space-y-0.5 pl-1">
+                <div class="text-emerald-400 font-semibold flex justify-between">
+                  <span>報酬</span>
+                  <span x-text="post.rewardScore + '分'"></span>
+                </div>
+                <div class="text-slate-400 truncate" x-text="post.rewardDesc || '無詳細描述'"></div>
+              </div>
+            </div>
+
+            <!-- 心得感悟 -->
+            <p x-show="post.note" class="text-xs text-slate-300 bg-slate-700/30 p-2.5 rounded-lg italic border-l-2 border-emerald-500" x-text="post.note"></p>
+
+            <!-- 按讚互動 -->
+            <div class="flex justify-end items-center pt-1">
+              <button @click="likePost(post)" class="flex items-center gap-1 text-xs text-slate-400 hover:text-rose-400 transition-colors bg-slate-700/40 px-2.5 py-1 rounded-full border border-slate-700">
+                <span class="text-rose-400">❤️</span>
+                <span x-text="post.likes || 0"></span>
+              </button>
+            </div>
+          </div>
+        </template>
+
+        <div x-show="filteredPosts.length === 0" class="text-center py-8 text-slate-500 text-xs">
+          目前該分類還沒有發表記錄喔！
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function appData() {
+      return {
+        currentFilter: '全部',
+        form: {
+          isAnonymous: true,
+          nickname: '',
+          relationType: '愛情',
+          costScore: 5,
+          costDesc: '',
+          rewardScore: 7,
+          rewardDesc: '',
+          happiness: 8,
+          note: ''
+        },
+        posts: JSON.parse(localStorage.getItem('social_ledger_posts')) || [
+          {
+            id: 1,
+            nickname: '匿名小鹿',
+            relationType: '愛情',
+            costScore: 4,
+            costDesc: '配合對方時間與休假習慣',
+            rewardScore: 9,
+            rewardDesc: '獲得極高的情感支持與安全感',
+            happiness: 9,
+            netROI: 5,
+            insightTag: '高品質滋養：高回報且幸福滿載',
+            note: '雖然需要調整自己的時間，但對方的回應讓我感到非常安心。',
+            likes: 6,
+            time: '10分鐘前'
+          },
+          {
+            id: 2,
+            nickname: '阿明',
+            relationType: '友情',
+            costScore: 8,
+            costDesc: '總是單方面當傾聽者與借錢',
+            rewardScore: 2,
+            rewardDesc: '偶爾聚餐的陪伴',
+            happiness: 3,
+            netROI: -6,
+            insightTag: '透支警訊：高消耗低幸福感',
+            note: '感覺這段關係有點失去平衡了，需要好好設定界線。',
+            likes: 12,
+            time: '1小時前'
+          }
+        ],
+
+        get filteredPosts() {
+          if (this.currentFilter === '全部') return this.posts;
+          return this.posts.filter(p => p.relationType === this.currentFilter);
+        },
+
+        getHappinessEmoji(val) {
+          if (val >= 9) return '🥰';
+          if (val >= 7) return '😊';
+          if (val >= 5) return '😐';
+          if (val >= 3) return '😔';
+          return '😭';
+        },
+
+        getTypeEmoji(type) {
+          if (type === '親情') return '🏠';
+          if (type === '友情') return '🤝';
+          return '💖';
+        },
+
+        generateInsightTag(cost, reward, happiness) {
+          const roi = reward - cost;
+          if (roi >= 3 && happiness >= 7) return '高品質滋養：高回報且幸福滿載';
+          if (roi < 0 && happiness >= 7) return '甜蜜負擔：高成本但滿足感強';
+          if (roi >= 2 && happiness < 5) return '理性合作：有回報但情感滿足低';
+          if (roi < -2 && happiness < 5) return '透支警訊：高消耗低幸福感';
+          return '平衡狀態：付出與收穫相當';
+        },
+
+        addPost() {
+          const net = this.form.rewardScore - this.form.costScore;
+          const newPost = {
+            id: Date.now(),
+            nickname: this.form.isAnonymous ? '匿名對象' : (this.form.nickname || '路人'),
+            relationType: this.form.relationType,
+            costScore: this.form.costScore,
+            costDesc: this.form.costDesc,
+            rewardScore: this.form.rewardScore,
+            rewardDesc: this.form.rewardDesc,
+            happiness: this.form.happiness,
+            netROI: net,
+            insightTag: this.generateInsightTag(this.form.costScore, this.form.rewardScore, this.form.happiness),
+            note: this.form.note,
+            likes: 0,
+            time: '剛剛'
+          };
+
+          this.posts.unshift(newPost);
+          localStorage.setItem('social_ledger_posts', JSON.stringify(this.posts));
+
+          // 清空表單
+          this.form.costDesc = '';
+          this.form.rewardDesc = '';
+          this.form.note = '';
+        },
+
+        likePost(post) {
+          post.likes++;
+          localStorage.setItem('social_ledger_posts', JSON.stringify(this.posts));
+        }
+      }
+    }
+  </script>
+</body>
+</html>
