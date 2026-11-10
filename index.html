@@ -57,25 +57,34 @@
         </div>
       </div>
 
-      <!-- 3. 成本與報酬 -->
-      <div class="grid grid-cols-2 gap-3 pt-1">
-        <div class="bg-slate-900/40 p-3 rounded-xl border border-red-500/20 space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-xs font-semibold text-red-400">付出成本 (Cost)</span>
-            <span class="text-xs font-bold text-red-400" x-text="form.costScore + ' 分'"></span>
+      <!-- 3. 成本與報酬描述 & 智慧分析按鈕 -->
+      <div class="space-y-3 pt-1">
+        <div class="grid grid-cols-2 gap-3">
+          <!-- 付出成本 -->
+          <div class="bg-slate-900/40 p-3 rounded-xl border border-red-500/20 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-semibold text-red-400">付出成本 (Cost)</span>
+              <span class="text-xs font-bold text-red-400" x-text="form.costScore + ' 分'"></span>
+            </div>
+            <input type="text" x-model="form.costDesc" placeholder="描述：如吵架、借錢、陪伴時間..." class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-red-400">
+            <input type="range" min="1" max="10" x-model.number="form.costScore" class="w-full accent-red-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer">
           </div>
-          <input type="range" min="1" max="10" x-model.number="form.costScore" class="w-full accent-red-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer">
-          <input type="text" x-model="form.costDesc" placeholder="如：陪伴時間、金錢..." class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-red-400">
+
+          <!-- 獲得報酬 -->
+          <div class="bg-slate-900/40 p-3 rounded-xl border border-emerald-500/20 space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-semibold text-emerald-400">獲得報酬 (Reward)</span>
+              <span class="text-xs font-bold text-emerald-400" x-text="form.rewardScore + ' 分'"></span>
+            </div>
+            <input type="text" x-model="form.rewardDesc" placeholder="描述：如安全感、關心、安全感..." class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-emerald-400">
+            <input type="range" min="1" max="10" x-model.number="form.rewardScore" class="w-full accent-emerald-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer">
+          </div>
         </div>
 
-        <div class="bg-slate-900/40 p-3 rounded-xl border border-emerald-500/20 space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-xs font-semibold text-emerald-400">獲得報酬 (Reward)</span>
-            <span class="text-xs font-bold text-emerald-400" x-text="form.rewardScore + ' 分'"></span>
-          </div>
-          <input type="range" min="1" max="10" x-model.number="form.rewardScore" class="w-full accent-emerald-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer">
-          <input type="text" x-model="form.rewardDesc" placeholder="如：情感支持、安全感..." class="w-full bg-slate-800 border border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none focus:border-emerald-400">
-        </div>
+        <!-- 🪄 AI 智慧生成評分與評語按鈕 -->
+        <button type="button" @click="autoAnalyze()" class="w-full bg-indigo-600/80 hover:bg-indigo-500 text-indigo-100 border border-indigo-500/40 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95">
+          <span>🪄 根據文字描述自動評估分數與評語</span>
+        </button>
       </div>
 
       <!-- 4. 幸福感評估 -->
@@ -90,10 +99,13 @@
         <input type="range" min="1" max="10" x-model.number="form.happiness" class="w-full accent-amber-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer">
       </div>
 
-      <!-- 5. 心得感悟 -->
+      <!-- 5. 心得感悟與分析評語 -->
       <div class="space-y-1.5">
-        <label class="text-xs font-medium text-slate-300">心得與反思 (選填)</label>
-        <textarea x-model="form.note" rows="2" placeholder="寫下這段關係帶給你的體悟..." class="w-full bg-slate-700/60 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-400 resize-none"></textarea>
+        <div class="flex justify-between items-center">
+          <label class="text-xs font-medium text-slate-300">心得感悟 / 系統評語</label>
+          <span x-show="autoCommentGenerated" class="text-[10px] text-indigo-400 animate-pulse">✨ 已生成專屬分析評語</span>
+        </div>
+        <textarea x-model="form.note" rows="3" placeholder="寫下體悟，或點擊上方「🪄自動評估」生成專業評語..." class="w-full bg-slate-700/60 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-400 resize-none"></textarea>
       </div>
 
       <!-- 送出按鈕 -->
@@ -178,10 +190,6 @@
             </div>
           </div>
         </template>
-
-        <div x-show="filteredPosts.length === 0" class="text-center py-8 text-slate-500 text-xs">
-          目前該分類還沒有發表記錄喔！
-        </div>
       </div>
     </section>
   </main>
@@ -190,6 +198,7 @@
     function appData() {
       return {
         currentFilter: '全部',
+        autoCommentGenerated: false,
         form: {
           isAnonymous: true,
           nickname: '',
@@ -213,24 +222,9 @@
             happiness: 9,
             netROI: 5,
             insightTag: '高品質滋養：高回報且幸福滿載',
-            note: '雖然需要調整自己的時間，但對方的回應讓我感到非常安心。',
-            likes: 6,
+            note: '💡【智慧評語】這段關係呈現極高回報率。雖然調整時間有些許成本，但對方提供的強大心理安全感顯著提升了您的幸福感。',
+            likes: 8,
             time: '10分鐘前'
-          },
-          {
-            id: 2,
-            nickname: '阿明',
-            relationType: '友情',
-            costScore: 8,
-            costDesc: '總是單方面當傾聽者與借錢',
-            rewardScore: 2,
-            rewardDesc: '偶爾聚餐的陪伴',
-            happiness: 3,
-            netROI: -6,
-            insightTag: '透支警訊：高消耗低幸福感',
-            note: '感覺這段關係有點失去平衡了，需要好好設定界線。',
-            likes: 12,
-            time: '1小時前'
           }
         ],
 
@@ -251,6 +245,54 @@
           if (type === '親情') return '🏠';
           if (type === '友情') return '🤝';
           return '💖';
+        },
+
+        // 🪄 智慧分析與文字生成評語邏輯
+        autoAnalyze() {
+          const costText = this.form.costDesc.trim();
+          const rewardText = this.form.rewardDesc.trim();
+
+          if (!costText && !rewardText) {
+            alert('請先填寫「付出成本」或「獲得報酬」的描述文字喔！');
+            return;
+          }
+
+          // 關鍵字強度計算
+          const heavyCostKeywords = ['金錢', '借錢', '吵架', '委屈', '痛苦', '耗能', '妥協', '看臉色', '底線'];
+          const lightCostKeywords = ['時間', '陪伴', '車程', '體力', '配合', '訊息'];
+          const highRewardKeywords = ['安全感', '陪伴', '理解', '支持', '成長', '幸福', '照顧', '傾聽', '開心'];
+          const lowRewardKeywords = ['偶爾', '還好', '禮貌', '飯局'];
+
+          let calculatedCost = 5;
+          let calculatedReward = 5;
+
+          heavyCostKeywords.forEach(kw => { if (costText.includes(kw)) calculatedCost += 2; });
+          lightCostKeywords.forEach(kw => { if (costText.includes(kw)) calculatedCost += 1; });
+          highRewardKeywords.forEach(kw => { if (rewardText.includes(kw)) calculatedReward += 2; });
+          lowRewardKeywords.forEach(kw => { if (rewardText.includes(kw)) calculatedReward += 1; });
+
+          // 限制 1~10 分
+          this.form.costScore = Math.min(10, Math.max(1, calculatedCost));
+          this.form.rewardScore = Math.min(10, Math.max(1, calculatedReward));
+
+          // 計算幸福感與產生評語
+          const netROI = this.form.rewardScore - this.form.costScore;
+          this.form.happiness = Math.min(10, Math.max(1, 5 + netROI));
+
+          // 根據理論自動生成社會學/心理學視角評語
+          let comment = '';
+          if (netROI >= 3) {
+            comment = `💡【智慧評語】這段${this.form.relationType}關係屬於強烈的「正向滋養型」。您的情感投資得到了實質且溫暖的回饋，幸福感極佳，值得繼續保持溫柔互動！`;
+          } else if (netROI >= 0) {
+            comment = `💡【智慧評語】目前付出與回報保持動態平衡。這是一段健康的雙向關係，建議持續觀察彼此的心靈需求。`;
+          } else if (netROI >= -3) {
+            comment = `💡【智慧評語】出現輕微的情感赤字。您付出的能量略高於收穫，建議適度表達自己的需求，建立清晰的心理界線。`;
+          } else {
+            comment = `💡【智慧評語】警訊！這段關係處於高消耗狀態。過度的成本付出已影響到您的幸福感，請記得先善待並愛護自己，必要時尋求停損或空間。`;
+          }
+
+          this.form.note = comment;
+          this.autoCommentGenerated = true;
         },
 
         generateInsightTag(cost, reward, happiness) {
@@ -287,6 +329,7 @@
           this.form.costDesc = '';
           this.form.rewardDesc = '';
           this.form.note = '';
+          this.autoCommentGenerated = false;
         },
 
         likePost(post) {
