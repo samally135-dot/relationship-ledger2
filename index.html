@@ -57,4 +57,208 @@
       <div class="space-y-3">
         <div class="grid grid-cols-2 gap-3">
           <div class="bg-slate-900/40 p-3 rounded-xl border border-red-500/20 space-y-2">
-            <div class="flex justify-between text-xs
+            <div class="flex justify-between text-xs">
+              <span class="text-red-400 font-semibold">付出成本</span>
+              <span class="text-red-400 font-bold" x-text="form.costScore + '分'"></span>
+            </div>
+            <input type="text" x-model="form.costDesc" placeholder="如：付出生命、吵架、時間..." class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none">
+            <input type="range" min="1" max="10" x-model.number="form.costScore" class="w-full accent-red-500">
+          </div>
+
+          <div class="bg-slate-900/40 p-3 rounded-xl border border-emerald-500/20 space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-emerald-400 font-semibold">獲得報酬</span>
+              <span class="text-emerald-400 font-bold" x-text="form.rewardScore + '分'"></span>
+            </div>
+            <input type="text" x-model="form.rewardDesc" placeholder="如：沒有好處、安全感..." class="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:outline-none">
+            <input type="range" min="1" max="10" x-model.number="form.rewardScore" class="w-full accent-emerald-500">
+          </div>
+        </div>
+
+        <!-- 🪄 AI 智慧分析按鈕 -->
+        <button type="button" @click="autoAnalyze()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-2 rounded-xl text-xs font-medium shadow-md transition-all">
+          🪄 根據文字描述自動評估分數與評語
+        </button>
+      </div>
+
+      <!-- 幸福感 -->
+      <div class="bg-slate-900/40 p-3 rounded-xl border border-amber-500/20 space-y-2">
+        <div class="flex justify-between text-xs text-amber-400">
+          <span class="font-semibold">✨ 幸福感指數 <span x-text="getEmoji(form.happiness)"></span></span>
+          <span class="font-bold" x-text="form.happiness + ' / 10'"></span>
+        </div>
+        <input type="range" min="1" max="10" x-model.number="form.happiness" class="w-full accent-amber-500">
+      </div>
+
+      <!-- 心得與評語 -->
+      <div class="space-y-1">
+        <label class="text-xs text-slate-300">心得感悟 / 系統評語</label>
+        <textarea x-model="form.note" rows="3" placeholder="寫下體悟，或點擊上方「🪄自動評估」生成專業評語..." class="w-full bg-slate-700 border border-slate-600 rounded-lg p-2.5 text-sm text-white focus:outline-none"></textarea>
+      </div>
+
+      <button type="button" @click="addPost()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-sm font-medium shadow-lg">
+        🚀 發布到關係佈告欄
+      </button>
+    </section>
+
+    <!-- 佈告欄 -->
+    <section class="space-y-4">
+      <div class="flex justify-between items-center">
+        <h3 class="text-sm font-semibold text-slate-300">📌 大家的心得與帳本</h3>
+        <div class="flex gap-1 bg-slate-800 p-1 rounded-lg border border-slate-700">
+          <template x-for="f in ['全部', '親情', '友情', '愛情']" :key="f">
+            <button @click="filter = f" :class="filter === f ? 'bg-slate-700 text-emerald-400' : 'text-slate-400'" class="px-2 py-0.5 rounded text-xs" x-text="f"></button>
+          </template>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <template x-for="post in filteredPosts" :key="post.id">
+          <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 space-y-3 shadow">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-medium text-sm text-slate-200" x-text="post.nickname"></span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-slate-700 text-slate-300" x-text="post.relationType"></span>
+                </div>
+                <span class="text-[10px] text-slate-400" x-text="post.time"></span>
+              </div>
+              <span class="text-xs font-bold px-2 py-1 rounded-full" :class="post.net >= 0 ? 'bg-emerald-950 text-emerald-400' : 'bg-red-950 text-red-400'" x-text="'淨值 ' + (post.net > 0 ? '+' : '') + post.net"></span>
+            </div>
+
+            <div class="flex gap-2">
+              <span class="text-xs px-2 py-0.5 rounded bg-amber-950 text-amber-300">幸福感 <span x-text="post.happiness"></span>/10</span>
+              <span class="text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300" x-text="post.tag"></span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-900/60 p-2.5 rounded-lg">
+              <div>
+                <span class="text-red-400 font-semibold">成本 (<span x-text="post.costScore"></span>分)</span>
+                <p class="text-slate-400 truncate" x-text="post.costDesc || '無'"></p>
+              </div>
+              <div>
+                <span class="text-emerald-400 font-semibold">報酬 (<span x-text="post.rewardScore"></span>分)</span>
+                <p class="text-slate-400 truncate" x-text="post.rewardDesc || '無'"></p>
+              </div>
+            </div>
+
+            <p x-show="post.note" class="text-xs text-slate-300 bg-slate-700/30 p-2 rounded italic border-l-2 border-emerald-500" x-text="post.note"></p>
+
+            <div class="flex justify-end">
+              <button @click="post.likes++; save();" class="text-xs text-slate-400 bg-slate-700/40 px-2.5 py-1 rounded-full">
+                ❤️ <span x-text="post.likes"></span>
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function appData() {
+      return {
+        filter: '全部',
+        form: { isAnonymous: true, nickname: '', relationType: '愛情', costScore: 5, costDesc: '', rewardScore: 7, rewardDesc: '', happiness: 8, note: '' },
+        posts: JSON.parse(localStorage.getItem('posts')) || [
+          { id: 1, nickname: '匿名', relationType: '愛情', costScore: 4, costDesc: '配合時間', rewardScore: 9, rewardDesc: '獲得安全感', happiness: 9, net: 5, tag: '高品質滋養', note: '💡【智慧評語】這段關係回報率高，幸福感充足！', likes: 3, time: '剛剛' }
+        ],
+        get filteredPosts() {
+          if (this.filter === '全部') return this.posts;
+          return this.posts.filter(p => p.relationType === this.filter);
+        },
+        getEmoji(v) {
+          if (v >= 8) return '🥰';
+          if (v >= 6) return '😊';
+          if (v >= 4) return '😐';
+          return '😔';
+        },
+        autoAnalyze() {
+          const c = this.form.costDesc.trim().toLowerCase();
+          const r = this.form.rewardDesc.trim().toLowerCase();
+          
+          if (!c && !r) {
+            alert('請先輸入成本或報酬的文字描述！');
+            return;
+          }
+
+          let cs = 5;
+          let rs = 5;
+
+          // 成本高強關鍵字解析
+          const extremeCost = ['生命', '一切', '全部', '所有', '死', '絕望', '毀掉', '青春', '身心俱疲'];
+          const highCost = ['金錢', '借錢', '吵架', '委屈', '痛苦', '耗能', '妥協', '看臉色', '底線', '累', '氣', '付出一切'];
+          const midCost = ['時間', '陪伴', '車程', '體力', '配合', '訊息', '幫忙'];
+
+          if (extremeCost.some(k => c.includes(k))) cs = 10;
+          else if (highCost.some(k => c.includes(k))) cs = 8;
+          else if (midCost.some(k => c.includes(k))) cs = 6;
+          else if (c.length > 0) cs = 6;
+
+          // 報酬強關鍵字與否定詞解析
+          const zeroReward = ['沒有', '沒得', '無', '0', '零', '甚麼都沒有', '什麼都沒有', '慘', '空氣', '垃圾'];
+          const highReward = ['安全感', '安全', '陪伴', '心靈', '愛', '開心', '支持', '成長', '幸福', '照顧', '傾聽', '拯救'];
+          const midReward = ['聊天', '飯', '偶爾', '還好', '禮貌'];
+
+          if (zeroReward.some(k => r.includes(k))) rs = 1;
+          else if (highReward.some(k => r.includes(k))) rs = 9;
+          else if (midReward.some(k => r.includes(k))) rs = 6;
+          else if (r.length > 0) rs = 4;
+
+          this.form.costScore = cs;
+          this.form.rewardScore = rs;
+          const net = rs - cs;
+
+          // 計算幸福感 (根據淨值邏輯調整)
+          let happy = 5 + net;
+          if (rs === 1 && cs >= 8) happy = 1;
+          this.form.happiness = Math.min(10, Math.max(1, happy));
+
+          // 社會工作與心理學導向評語生成
+          if (cs >= 9 && rs <= 2) {
+            this.form.note = `💡【智慧評語】嚴重警訊！您在這段${this.form.relationType}中傾注了極高的個人資源（甚至包含生命與全部情緒），卻未能獲得實質心理支持。這屬於極度失衡的情感剝削與透支狀態，強烈建議建立自我保護界線，優待自己的身心健康。`;
+          } else if (net >= 3) {
+            this.form.note = `💡【智慧評語】這段${this.form.relationType}關係呈現「正向滋養」。付出雖有但回報豐厚，幸福感充足！`;
+          } else if (net >= 0) {
+            this.form.note = `💡【智慧評語】彼此互動保持動態平衡，屬於健康的雙向交流狀態。`;
+          } else if (net >= -3) {
+            this.form.note = `💡【智慧評語】出現輕微情感赤字！您的付出略高於收穫，建議適度表達自身訴求。`;
+          } else {
+            this.form.note = `💡【智慧評語】消耗顯著大於收穫。過度妥協容易造成心理倦怠，記得先照顧好自己。`;
+          }
+        },
+        addPost() {
+          const net = this.form.rewardScore - this.form.costScore;
+          let tag = '平衡狀態';
+          if (net >= 3) tag = '高品質滋養';
+          else if (net <= -4) tag = '嚴重透支警訊';
+          else if (net < 0) tag = '情感赤字';
+
+          this.posts.unshift({
+            id: Date.now(),
+            nickname: this.form.isAnonymous ? '匿名' : (this.form.nickname || '路人'),
+            relationType: this.form.relationType,
+            costScore: this.form.costScore,
+            costDesc: this.form.costDesc,
+            rewardScore: this.form.rewardScore,
+            rewardDesc: this.form.rewardDesc,
+            happiness: this.form.happiness,
+            net: net,
+            tag: tag,
+            note: this.form.note,
+            likes: 0,
+            time: '剛剛'
+          });
+          this.save();
+          this.form.costDesc = '';
+          this.form.rewardDesc = '';
+          this.form.note = '';
+        },
+        save() {
+          localStorage.setItem('posts', JSON.stringify(this.posts));
+        }
+      }
+    }
+  </script>
+</body>
+</html>
